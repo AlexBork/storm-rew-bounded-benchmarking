@@ -1,7 +1,7 @@
 // Random walk model to showcase increasing bounds can lead to convergence to unbounded value
 // The model has a single agent that can move right. The move is successful with probability movep.
 // At any point, the agent can decide to observe its current position. With probability obsp, the observation is successful.
-// At any point, the agent can decide to stop. If the agent stops at position N-1, it reaches the goal (N+), otherwise it falls into a trap.
+// At any point, the agent can decide to stop. If the agent stops at position N-1, it reaches the goal (N+2), otherwise it falls into a trap.
 // Observation costs 1 unit
 pomdp
 

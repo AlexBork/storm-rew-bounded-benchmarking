@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 # Replacements will be applied in this order
 REPLACEMENTS = OrderedDict()
-REPLACEMENTS["/rwthfs/rz/cluster/home/tq429871/git/rew-bounded-benchmarking/"] = "$BENCH_HOME/"
+REPLACEMENTS["/rwthfs/rz/cluster/home/ab129254/git/storm-rew-bounded-benchmarking/"] = "$BENCH_HOME/"
 
 if len(sys.argv) != 2:
     print("Usage: python3 cleanup.py <directory>")
