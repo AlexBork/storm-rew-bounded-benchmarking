@@ -54,7 +54,7 @@ for i in range(8,33):
     seq_c_cfg["notes"] += [f"Sequential approach, reward-aware, with cutoffs and size threshold 2^{i}"]
     CONFIGS.append(seq_c_cfg)
     unr_c_cfg = copy.deepcopy(base_cfg) # unfolding approach with cutoffs and reward awareness
-    unr_c_cfg["id"] = f'caunfc{i:02}'
+    unr_c_cfg["id"] = f'raunfc{i:02}'
     unr_c_cfg["cmd"] += ["--reward-aware", "--unfold-reward-bound", "--belief-exploration unfold", f"--size-threshold {2**i}"]
     unr_c_cfg["notes"] += [f"Unfolds reward bounds, reward-aware, with cutoffs and size threshold 2^{i}"]
     CONFIGS.append(unr_c_cfg)
@@ -77,7 +77,7 @@ for i in sorted(set([i*j for i,j in itertools.product([1,2,3,4,5,6,7],[1,2,3,4,5
     seq_d_cfg["notes"] += [f"Sequential approach, reward-aware, with discretization and resolution {i}"]
     CONFIGS.append(seq_d_cfg)
     unr_d_cfg = copy.deepcopy(base_cfg)
-    unr_d_cfg["id"] = f'caunfd{i:02}'
+    unr_d_cfg["id"] = f'raunfd{i:02}'
     unr_d_cfg["cmd"] += ["--reward-aware", "--unfold-reward-bound", "--belief-exploration discretize", f"--resolution {i}", "--triangulationmode static"]
     unr_d_cfg["notes"] += [f"Unfolds reward bounds, reward-aware, with discretization and resolution {i}"]
     CONFIGS.append(unr_d_cfg)
@@ -109,7 +109,7 @@ CONFIGS.append(seq_fully_obs)
 CONFIGS = sorted(CONFIGS, key=lambda x: x["id"])
 
 META_CONFIG_TIMELIMITS = [1800]
-BASE_CONFIGS = ["unfc", "unfd", "caunfc", "caunfd", "belseqc", "belseqd"] #, "unbc", "unbd"]
+BASE_CONFIGS = ["unfc", "unfd", "raunfc", "raunfd", "belseqc", "belseqd"] #, "unbc", "unbd"]
 META_CONFIGS = []
 for timelimit in META_CONFIG_TIMELIMITS:
     for cfgbase in BASE_CONFIGS:
