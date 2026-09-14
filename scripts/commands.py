@@ -46,7 +46,7 @@ def create_invocations():
 
     cfg_options = OrderedDict([[c["id"], c["notes"]] for c in tool_configs])
     cfg_groups = OrderedDict((prefix, [key for key in cfg_options if key.startswith(prefix)])
-                             for prefix in ["belseq", "caunf", "unf"])
+                             for prefix in ["belseq", "raunf", "unf"])
     cfg_selection = input_selection("Tool Configurations", cfg_options, groups=cfg_groups)
     cfgs = [c for c in tool_configs if c["id"] in cfg_selection]
     print(f"Selected {len(cfgs)} Tool configurations.")

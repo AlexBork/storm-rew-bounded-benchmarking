@@ -392,7 +392,7 @@ def process_benchmark_instance_data(benchmark_instances, execution_json):
         bench_data["num-epochs"] = execution_json["num-epochs"]
     if "unfolding-pomdp" in execution_json and "states" in execution_json["unfolding-pomdp"]:
         if "--reward-aware" in " ".join(execution_json["commands"]):
-            bench_data["caunf-states"] = execution_json["unfolding-pomdp"]["states"]
+            bench_data["raunf-states"] = execution_json["unfolding-pomdp"]["states"]
         else:
             bench_data["unf-states"] = execution_json["unfolding-pomdp"]["states"]
     bench_data["invocations"] = [execution_json["id"]]
@@ -402,7 +402,7 @@ def process_benchmark_instance_data(benchmark_instances, execution_json):
         benchmark_instances[bench_id] = bench_data
     else:
         # ensure consistency
-        for key in ["id", "name", "formalism", "type", "par", "property", "dim", "states", "choices", "observations", "transitions", "num-epochs", "unf-states", "caunf-states"]:
+        for key in ["id", "name", "formalism", "type", "par", "property", "dim", "states", "choices", "observations", "transitions", "num-epochs", "unf-states", "raunf-states"]:
             if key in bench_data:
                 if key in benchmark_instances[bench_id]:
                     if benchmark_instances[bench_id][key] != bench_data[key]:
@@ -808,7 +808,7 @@ def export_data(exec_data, benchmark_instances, export_kinds, prefix=""):
             latex_header = "\n& ".join(latex_cols)
             save_latex(cells, latex_col_aligns, latex_header, os.path.join(OUT_DIR, "{}table{}.tex".format(prefix, kind[len("latex"):])))
         else:
-            cols = [["name"], ["par"], ["states"], ["choices"], ["observations"], ["property"], ["dim"], ["num-epochs"], ["unf-states"], ["caunf-states"]]
+            cols = [["name"], ["par"], ["states"], ["choices"], ["observations"], ["property"], ["dim"], ["num-epochs"], ["unf-states"], ["raunf-states"]]
             cfgs = [ [tool.NAME, c["id"]] for tool in TOOLS  for c in tool.CONFIGS + tool.META_CONFIGS ]
             cols += [[c[0], c[1], "wallclock-time"] for c in cfgs]
             # create and export different kinds of data
