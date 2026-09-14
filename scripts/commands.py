@@ -37,17 +37,17 @@ def get_command_lines(tool_binaries, cfg, inst = None):
     return [f"{tool_binaries[cfg['tool']]} {tools.get_command_line_args(cfg, inst)}"]
     
 def create_invocations():
-    tool_options = OrderedDict([[t.NAME, t.DESCRIPTION] for t in tools.TOOLS])
-    tool_selection = input_selection("Tools", tool_options)
     tool_configs = []
     tool_binaries = dict()
     cfgs = []
-    for t in tool_selection:
-        tool_binaries[t] = ask_user_for_info(f"Enter path to {t} binary:", tools.TOOL_NAMES[t].default_executable, check_execution)
-        tool_configs += tools.TOOL_NAMES[t].CONFIGS
+    for t in tools.TOOLS:
+        tool_binaries[t.NAME] = ask_user_for_info(f"Enter path to {t.NAME} binary:", t.default_executable, check_execution)
+        tool_configs += t.CONFIGS
 
     cfg_options = OrderedDict([[c["id"], c["notes"]] for c in tool_configs])
-    cfg_selection = input_selection("Tool Configurations", cfg_options)
+    cfg_groups = OrderedDict((prefix, [key for key in cfg_options if key.startswith(prefix)])
+                             for prefix in ["belseq", "caunf", "unf"])
+    cfg_selection = input_selection("Tool Configurations", cfg_options, groups=cfg_groups)
     cfgs = [c for c in tool_configs if c["id"] in cfg_selection]
     print(f"Selected {len(cfgs)} Tool configurations.")
     for cfg in cfgs:
