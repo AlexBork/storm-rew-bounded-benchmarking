@@ -1,4 +1,4 @@
-import os, copy, itertools, json
+import os, copy, itertools, json, re
 from collections import OrderedDict
 
 import benchmarks
@@ -70,7 +70,7 @@ for i in range(8,33):
     unb_c_cfg["notes"] += [f"Discards the reward bounds, not reward-aware, with cutoffs and size threshold 2^{i}"]
     # CONFIGS.append(unb_c_cfg)
 
-for i in sorted(set([i*j for i,j in itertools.product([1,2,3,4,5,6,7],[1,2,3,4,5,6,7])])):
+for i in sorted(set([i*j for i,j in itertools.product([1,2,3,4,5,6,7],[2,3,4,5,6,7])])):
     seq_d_cfg = copy.deepcopy(base_cfg)
     seq_d_cfg["id"] = f'belseqd{i:02}'
     seq_d_cfg["cmd"] += ["--reward-aware", "--belief-exploration discretize", f"--resolution {i}", "--triangulationmode static"]
@@ -145,6 +145,7 @@ def parse_logfile(log, inv):
     inv["not-supported"] = contains_any_of(log, unsupported_messages)
     memout_messages = [] # add messages that indicate that the invocation is not supported
     memout_messages.append("An unexpected exception occurred and caused Storm to terminate. The message of this exception is: std::bad_alloc")
+    memout_messages.append("Return code:\t-7") # SIGBUS on the Linux benchmark host
     memout_messages.append("Return code:\t-9")
     inv["memout"] = contains_any_of(log, memout_messages)
     known_error_messages = [] # add messages that indicate a "known" error, i.e., something that indicates that no warning should be printed
@@ -153,7 +154,11 @@ def parse_logfile(log, inv):
     if len(inv["return-codes"]) != 1 or inv["return-codes"][0] != 0:
         if not inv["timeout"] and not inv["memout"]: print("WARN: Unexpected return code(s): {} in {}".format(inv["return-codes"], inv["id"]))
 
-    pos = try_parse(log, 0, "Time for model construction: ", "s.", inv, "model-building-time", float)
+    pos = 0
+
+    pos = try_parse(log, pos, "--resolution ", " --triangulationmode", inv, "resolution", int)
+
+    pos = try_parse(log, pos, "Time for model construction: ", "s.", inv, "model-building-time", float)
     if pos == 0: 
         assert inv["timeout"] or inv["memout"], "WARN: unable to get model construction time for {}".format(inv["id"])
         return
@@ -173,6 +178,7 @@ def parse_logfile(log, inv):
         inv["total-chk-time"] = "0.0"
 
     posUnf = log.find("Perform explicit unfolding of reward bounds.", pos)
+    posRa = log.find("Extend observation function to become reward aware.", pos)
     if posUnf >= 0:
         pos = posUnf
         inv["unfolding-pomdp"] = OrderedDict()
@@ -180,8 +186,15 @@ def parse_logfile(log, inv):
         pos = try_parse(log, pos, "Transitions: \t", "\n", inv["unfolding-pomdp"], "transitions", int)
         pos = try_parse(log, pos, "Choices: \t", "\n", inv["unfolding-pomdp"], "choices", int)
         pos = try_parse(log, pos, "Observations: \t", "\n", inv["unfolding-pomdp"], "observations", int)
+    elif posRa >= 0:
+        pos = posRa
+        inv["ra-pomdp"] = OrderedDict()
+        pos = try_parse(log, pos, "States: \t", "\n", inv["ra-pomdp"], "states", int)
+        pos = try_parse(log, pos, "Transitions: \t", "\n", inv["ra-pomdp"], "transitions", int)
+        pos = try_parse(log, pos, "Choices: \t", "\n", inv["ra-pomdp"], "choices", int)
+        pos = try_parse(log, pos, "Observations: \t", "\n", inv["ra-pomdp"], "observations", int)
 
-    if "Exploration stopped before all beliefs were explored" in log:
+    if "Exploration stopped before all beliefs were explored" in log or "Belief exploration stopped early:" in log:
         inv["belief-mdp-incomplete"] = True
 
     posBel = log.find("Constructing the belief MDP...", pos)
@@ -194,10 +207,24 @@ def parse_logfile(log, inv):
         pos = try_parse(log, pos, "Time for exploring beliefs: ", "s.", inv["belief-mdp"], "expl-time", float)
         pos = try_parse(log, pos, "Time for building the belief MDP: ", "s.", inv["belief-mdp"], "build-time", float)
         pos = try_parse(log, pos, "Time for analyzing the belief MDP: ", "s.", inv["belief-mdp"], "chk-time", float)
+        inv["belief-mdp-states"] = inv["belief-mdp"].get("states", 0)
+    else:
+        belief_mdp_match = re.search(
+            r"Constructed belief MDP: (\d+) states, (\d+) choices, (\d+) transitions\.",
+            log[pos:],
+        )
+        if belief_mdp_match:
+            inv["belief-mdp"] = OrderedDict([
+                ("states", int(belief_mdp_match.group(1))),
+                ("choices", int(belief_mdp_match.group(2))),
+                ("transitions", int(belief_mdp_match.group(3))),
+            ])
+            inv["belief-mdp-states"] = inv["belief-mdp"]["states"]
+            pos += belief_mdp_match.end()
 
-    # intentionally, this is now only parsed if the belief MDP is *not* constructed.
-    # this is because the belief MDP might be incomplete and thus the reported number of checked epochs might be lower
-    pos = try_parse(log, pos, "#checked epochs: ", ".\n", inv, "num-epochs", int)
+    epoch_counts = [int(count) for count in re.findall(r"#checked epochs:\s*(\d+)\.", log)]
+    if epoch_counts:
+        inv["num-epochs"] = max(epoch_counts)
 
     pos = try_parse(log, pos, "\nResult: ", "\n", inv, "result", str)
     pos = try_parse(log, pos, "Time for POMDP analysis: ", "s.", inv, "total-chk-time", float)

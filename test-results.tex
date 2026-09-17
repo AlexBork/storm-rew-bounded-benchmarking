@@ -1,0 +1,93 @@
+% Compile from the repository root:
+% lualatex --interaction=nonstopmode --halt-on-error --output-directory=data test-results.tex
+\documentclass[fontsize=10pt,paper=b5,twoside,DIV=11,BCOR=9mm,
+    headinclude=true,footinclude=false]{scrartcl}
+
+% Font setup from dissertation/src/packages.tex and style/presets.tex.
+\usepackage[libertine]{newtxmath}
+\usepackage[no-math]{fontspec}
+\setmainfont{Linux Libertine O}
+\setsansfont{Linux Biolinum O}
+\setmonofont[Scale=0.875]{Droid Sans Mono}
+\usepackage{amsmath}
+\usepackage[table]{xcolor}
+\usepackage{array,booktabs,multirow,ifthen,subcaption}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{currfile,xurl}
+
+% Label each plot with its source filename, keeping the label and plot together.
+% These hooks apply only to this preview; individual plot files stay unchanged.
+\AddToHook{env/tikzpicture/before}{%
+    \par\noindent\begin{minipage}{\linewidth}\raggedright
+    {\scriptsize\expandafter\url\expandafter{\currfilename}\par}\smallskip
+}
+\AddToHook{env/tikzpicture/after}{\end{minipage}\par}
+
+% Only the symbols and macros needed by the generated tables, copied from
+% dissertation/src/style/customsymbols.tex and dissertation/src/commands.tex.
+\makeatletter
+\DeclareFontEncoding{LS2}{}{\@noaccents}
+\makeatother
+\DeclareFontSubstitution{LS2}{stix}{m}{n}
+\DeclareSymbolFont{largesymbolsstix}{LS2}{stixex}{m}{n}
+\DeclareMathDelimiter{\lbrbrak}{\mathopen}{largesymbolsstix}{"EE}{largesymbolsstix}{"14}
+\DeclareMathDelimiter{\rbrbrak}{\mathclose}{largesymbolsstix}{"EF}{largesymbolsstix}{"15}
+\newcommand*{\tuplestyle}[1]{\boldsymbol{#1}}
+\newcommand*{\tupleaccess}[2]{{#1\!\lbrbrak#2\rbrbrak}}
+\newcommand*{\vecrew}{\tuplestyle{R}}
+\newcommand*{\boundtuple}{\tuplestyle{t}}
+\newcommand*{\costthresh}{\boundtuple} % Name used in the original plot formulation.
+\newcommand{\leveldegree}{\tuplestyle{d}}
+\newcommand{\epochs}{\ensuremath{\mathsf{E}}}
+\newcommand*{\model}[1]{\textsf{#1}}
+\newcommand*{\sizethreshold}{\tau}
+\newcommand*{\resolution}{\eta}
+\newcommand*{\config}[2][]{\ifthenelse{\equal{#1}{}}{\textsc{#2}}{\textsc{#2}$_{#1}$}}
+
+\setlength{\parindent}{0pt}
+\raggedbottom
+
+\begin{document}
+
+\textbf{Benchmark instances}\par\medskip
+{\small\input{data/rewbnd-latex/tablebenchmarks.tex}\par}
+
+\clearpage
+\textbf{Unfold results}\par\medskip
+\input{data/rewbnd-latex/tableunf.tex}
+
+\clearpage
+\textbf{Reward-aware results (1800 seconds)}\par\medskip
+\input{data/rewbnd-latex/tablet1800.tex}
+
+% The collection indices below input one separate file per plot.
+% Each collection starts on a fresh page. To test an individual plot, use
+% its filename instead, e.g. data/rew-bounded-plots/bnds_result-clean.tex.
+\clearpage
+\setlength{\parskip}{1em}
+\section*{Time versus value bounds}
+\input{data/rew-bounded-plots/time_result.tex}
+
+\clearpage
+\section*{Shared legend without externalization}
+\begin{figure}[!ht]
+  \centering
+  \begin{subfigure}[t]{0.49\linewidth}
+    \centering
+    \input{data/rew-bounded-plots/nolegend/lvls_result-clean-nolegend.tex}
+    \caption{Levels versus value bounds.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.49\linewidth}
+    \centering
+    \input{data/rew-bounded-plots/nolegend/bnds_result-clean-nolegend.tex}
+    \caption{Reward bounds versus value bounds.}
+  \end{subfigure}
+
+  \medskip
+  \makebox[\linewidth][c]{\input{data/rew-bounded-plots/lvls_result-legend.tex}}
+  \caption{Two generated plots with one shared method legend.}
+\end{figure}
+
+\end{document}

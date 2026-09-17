@@ -4,5 +4,7 @@ __pycache__
 tmp/*
 */logs*/*
 */data/*
+/data/
+/logs_diss_rew*/
 bin/*
 experiments-*/*
