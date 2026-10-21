@@ -114,9 +114,11 @@ def save_latex_plots(filename, plots, kind="time"):
     scaled x ticks=false,
 """)
             else:
-                f.write(r"""    xmin=50, xmax=102, xmode=normal,
-    ymin=0.82, ymax=1.008,
+                f.write(r"""    xmin=25, xmax=105, xmode=normal,
+    ymin=0, ymax=1.04,
     xlabel={$\tupleaccess{\boundtuple}{1}$},
+    xtick={30,40,50,60,70,80,90,100},
+    ytick={0,0.2,0.4,0.6,0.8,1},
     scaled x ticks=false,
 """)
             f.write("]\n")
@@ -1242,16 +1244,20 @@ def get_lvlbnd_result_list_for_plot(cfg_id, instances, kind):
             datalist.append((kind_value, result_value))
     datalist = sorted(datalist)
     if len(datalist) == 0: return []
-    result = [(min_kind_value, 0.0 if is_increasing else 1.0)]
+    # Bound-magnitude plots should begin with their first measured value rather
+    # than an artificial 0 or 1 endpoint at that same bound.
+    result = [] if kind == "bnds" else [(min_kind_value, 0.0 if is_increasing else 1.0)]
     for t,r in datalist:
-        prev_r = result[-1][1]
+        prev_r = result[-1][1] if result else None
         # discard bounds that are worse than what is already known TODO: check if this is necessary
         # if is_increasing and prev_r > r: continue
         # if is_decreasing and prev_r < r: continue
-        result.append((t,prev_r)) # results in a 'stair' form for the plot TODO: check if this is what we want
+        if prev_r is not None:
+            result.append((t,prev_r)) # results in a 'stair' form for the plot TODO: check if this is what we want
         result.append((t,r))
     result.append((max_kind_value, result[-1][1]))
-    result = result[1:]
+    if kind != "bnds":
+        result = result[1:]
     return result
 
 

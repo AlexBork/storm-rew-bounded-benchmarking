@@ -42,14 +42,16 @@ def get_parameter_zero_padding(par_values):
     return max_lengths
 
 
-def create_inst_ids(bset_name, model_name, property_id, par_names = None, par_values_list = None):
+def create_inst_ids(bset_name, model_name, property_id, par_names = None, par_values_list = None, zero_pad = True):
     # instance IDs shall not include "_" or "."
     assert "_" not in bset_name and "_" not in model_name and "_" not in property_id, f"Invalid character '_' in model name or property id: {model_name}, {property_id}"
     if par_names is None:
         return [f"{bset_name}_{model_name}_{property_id}_"]
-    par_fill = get_parameter_zero_padding(par_values_list)
-
-    create_par_string = lambda par_val: "-".join([f"{n}{v:0{f}}" for n,v,f in zip(par_names, par_val, par_fill)])
+    if zero_pad:
+        par_fill = get_parameter_zero_padding(par_values_list)
+        create_par_string = lambda par_val: "-".join([f"{n}{v:0{f}}" for n,v,f in zip(par_names, par_val, par_fill)])
+    else:
+        create_par_string = lambda par_val: "-".join([f"{n}{v}" for n,v in zip(par_names, par_val)])
     result = [f"{bset_name}_{model_name}_{property_id}_{create_par_string(p)}" for p in par_values_list]
     return result
 
@@ -76,11 +78,11 @@ def create_instance(inst_id, bset_name, model_name, property_id, file_parameter_
     assert inst["property"].get("num-bnd-rew-assignments", 0) == len(inst["model"].get("bnd-thresholds", [])), f"Inconsistent dimension of reward bound for instance {inst_id}."
     return inst
 
-def create_model_instances(bset_name, model_name, property_id, file_parameter_names = [], open_parameter_names = [], par_values_list = None, model_filename = None, property_filename = None, bound_relations = None):
+def create_model_instances(bset_name, model_name, property_id, file_parameter_names = [], open_parameter_names = [], par_values_list = None, model_filename = None, property_filename = None, bound_relations = None, zero_pad_ids = True):
     par_names = file_parameter_names + open_parameter_names
     if len(par_names) == 0:
         assert par_values_list is None
-        ids = create_inst_ids(bset_name, model_name, property_id)
+        ids = create_inst_ids(bset_name, model_name, property_id, zero_pad=zero_pad_ids)
         assert len(ids) == 1
         return [create_instance(ids[0], bset_name, model_name, property_id, model_filename=model_filename, property_filename=property_filename, bound_relations=bound_relations)]
     else:
@@ -88,7 +90,7 @@ def create_model_instances(bset_name, model_name, property_id, file_parameter_na
         assert len(par_values_list) > 0
         assert len(par_names) == len(par_values_list[0])
         par_values_list = [p if type(p) is list else [p] for p in par_values_list] # ensure list of lists
-        ids = create_inst_ids(bset_name, model_name, property_id, par_names, par_values_list)
+        ids = create_inst_ids(bset_name, model_name, property_id, par_names, par_values_list, zero_pad=zero_pad_ids)
         assert len(par_values_list) == len(ids)
         return [create_instance(id, bset_name, model_name, property_id, file_parameter_names, open_parameter_names, par_val, model_filename, property_filename, bound_relations) for id,par_val in zip(ids, par_values_list)]
 
@@ -104,8 +106,8 @@ def create_all_instances():
     instances += create_model_instances( "unb", name, "unrmax", open_parameter_names=open_parameters[:1], par_values_list = [[n_val] for n_val in set([p[0] for p in par_val_list])])
 
     # instances for bnds experiments
-    par_val_list = [[6,b,5,1,0] for b in range(100,105,5)]
-    instances += create_model_instances("bnds", name, "rbrmax2", open_parameter_names=open_parameters, par_values_list=par_val_list, bound_relations=bound_relations)
+    par_val_list = [[6,b,5,1,0] for b in range(25,105,5)]
+    instances += create_model_instances("bnds", name, "rbrmax2", open_parameter_names=open_parameters, par_values_list=par_val_list, bound_relations=bound_relations, zero_pad_ids=False)
     # instances for lvls experiments
     par_val_list = [[6,60,5,l,0] for l in [1, 2, 3, 4, 5, 6, 10, 12, 15, 20, 30, 60]]
     instances += create_model_instances("lvls", name, "rbrmax2", open_parameter_names=open_parameters, par_values_list=par_val_list, bound_relations=bound_relations)
