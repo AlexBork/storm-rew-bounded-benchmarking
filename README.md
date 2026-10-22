@@ -4,8 +4,8 @@ Postprocessing writes three LaTeX tables to `data/rewbnd-latex`:
 
 - `tablebenchmarks.tex`: benchmark sizes and reward bounds.
 - `tableunf.tex`: unfold results with cutoff and discretization statistics.
-- `tablet1800.tex`: ra-unfold versus ra-bel-seq, using the best configurations
-  within 1800 seconds. All four lines of each selected result cell are
+- `tablet900.tex`: ra-unfold versus ra-bel-seq, using the best configurations
+  within 900 seconds. All four lines of each selected result cell are
   highlighted with `RWTHblue25`, mixed with gray on shaded rows, matching the
   POMDP benchmarking repository.
   Highlights select the best lower and upper bounds, breaking ties by runtime.

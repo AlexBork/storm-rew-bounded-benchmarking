@@ -101,7 +101,7 @@ def save_latex_plots(filename, plots, kind="time"):
 """)
             if kind == "time":
                 f.write(r"""    ymin=0, ymax=1.04,
-    xmin=0.1, xmax=1800, xmode=log,
+    xmin=0.1, xmax=900, xmode=log,
     xlabel={time (seconds)},
     xtick={0.1,1,10,100,1000},
     minor x tick num=8,
@@ -1074,7 +1074,7 @@ def export_data(exec_data, benchmark_instances, export_kinds, prefix="", *, time
         is_decreasing = False
         for cfg in [c for c in storm.CONFIGS if c["id"].startswith(cfgbase)]:
             res = get_result_if_supported(exec_data, storm.NAME, cfg["id"], inst_id)
-            if res is not None and "result" in res:
+            if res is not None and "result" in res and res["wallclock-time"] <= 900:
                 direction, result_value = get_result_bound(res)
                 is_increasing = is_increasing or direction == "≥" # lower bounds should be increasing over time
                 is_decreasing = is_decreasing or direction == "≤" # upper bounds should be decreasing over time
@@ -1090,7 +1090,7 @@ def export_data(exec_data, benchmark_instances, export_kinds, prefix="", *, time
             if is_decreasing and prev_r < r: continue
             result.append((t,prev_r)) # results in a 'stair' form for the plot
             result.append((t,r))
-        result.append((1800, result[-1][1]))
+        result.append((900, result[-1][1]))
         return result
 
     def create_time_result_csv():

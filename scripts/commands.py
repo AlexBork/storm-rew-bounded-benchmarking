@@ -58,7 +58,7 @@ def create_invocations():
     invocations = [OrderedDict(id=get_invocation_id(inst,cfg), instance=inst, configuration=cfg) for inst,cfg in itertools.product(benchmarks.INSTANCES, cfgs) if is_supported(inst, cfg) and inst["benchmark-set"] in bset_selection]
     print(f"Selected {len(invocations)} invocations.")
 
-    time_limit = int(ask_user_for_info(f"Enter a time limit (in seconds):", "1800", lambda usr_in : usr_in.isdigit()))
+    time_limit = int(ask_user_for_info(f"Enter a time limit (in seconds):", "900", lambda usr_in : usr_in.isdigit()))
     log_dir = ask_user_for_info(f"Enter a logfile directory ", f"logs{date.today()}")
     if not os.path.exists(log_dir): os.makedirs(log_dir)
     inv_name = ask_user_for_info(f"Enter a file for storing the invocation information ", f"inv{date.today()}.json", ask_user_overwrite_file)

@@ -95,7 +95,7 @@ for i in sorted(set([i*j for i,j in itertools.product([1,2,3,4,5,6,7],[2,3,4,5,6
 
 CONFIGS = sorted(CONFIGS, key=lambda x: x["id"])
 
-META_CONFIG_TIMELIMITS = [1800]
+META_CONFIG_TIMELIMITS = [900]
 BASE_CONFIGS = ["unfc", "unfd", "raunfc", "raunfd", "belseqc", "belseqd"] #, "unbc", "unbd"]
 META_CONFIGS = []
 for timelimit in META_CONFIG_TIMELIMITS:
