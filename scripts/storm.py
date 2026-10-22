@@ -27,7 +27,7 @@ def get_command_line_args(cfg, inst = None):
             out.append(f"-const {c}")
         lvl_def = lvl_width_string(inst)
     out += cfg["cmd"]
-    if lvl_def is not None and "--reward-aware" in cfg["cmd"] and "--check-fully-observable" not in cfg["cmd"]:
+    if lvl_def is not None and "--reward-aware" in cfg["cmd"]:
         out[out.index("--reward-aware")] = f"--reward-aware {lvl_def}"
     return " ".join(out)
         
@@ -41,7 +41,7 @@ CONFIGS = []
 
 base_cfg = OrderedDict()
 base_cfg["tool"] = NAME
-base_cfg["cmd"] = ["--timemem", "--statistics"]
+base_cfg["cmd"] = ["--timemem", "--statistics", "--sound"]
 base_cfg["notes"] = ["Storm-pomdp"]
 base_cfg["supported-obj-types"] = ["rbr"] # the default is to only support reward bounded reachability
 base_cfg["supported-model-types"] = ["pomdp"]
@@ -92,19 +92,6 @@ for i in sorted(set([i*j for i,j in itertools.product([1,2,3,4,5,6,7],[2,3,4,5,6
     unb_d_cfg["cmd"] += ["--belief-exploration discretize", f"--resolution {i}", "--triangulationmode static"]
     unb_d_cfg["notes"] += [f"Discards the reward bounds, not reward-aware, with discretization and resolution {i}"]
     # CONFIGS.append(unb_d_cfg)
-
-# Check fully observable models (not relevant)
-seq_fully_obs = copy.deepcopy(base_cfg)
-seq_fully_obs["id"] = "mdpseq"
-seq_fully_obs["cmd"] += ["--check-fully-observable", "--reward-aware"]
-seq_fully_obs["notes"] += ["Sequential approach on the underlying (fully observable) observable MDP"]
-CONFIGS.append(seq_fully_obs)
-
-# unf_fully_obs = copy.deepcopy(base_cfg)
-# unf_fully_obs["id"] = "funf"
-# unf_fully_obs["cmd"] += ["--check-fully-observable", "--unfold-reward-bound"]
-# unf_fully_obs["notes"] += ["Unfolding approach with fully observable  MDP"]
-# CONFIGS.append(unf_fully_obs)
 
 CONFIGS = sorted(CONFIGS, key=lambda x: x["id"])
 
@@ -222,11 +209,12 @@ def parse_logfile(log, inv):
             inv["belief-mdp-states"] = inv["belief-mdp"]["states"]
             pos += belief_mdp_match.end()
 
-    epoch_counts = [int(count) for count in re.findall(r"#checked epochs:\s*(\d+)\.", log)]
-    if epoch_counts:
-        inv["num-epochs"] = max(epoch_counts)
-
     pos = try_parse(log, pos, "\nResult: ", "\n", inv, "result", str)
+    if "result" in inv:
+        # Newer Storm versions can print an exact result as a degenerate interval.
+        interval = re.fullmatch(r"\[\s*([^,]+),\s*([^\]]+)\]\s*(?:\(width=[^)]*\))?", inv["result"])
+        if interval is not None and float(interval[1]) == float(interval[2]):
+            inv["result"] = interval[1].strip()
     pos = try_parse(log, pos, "Time for POMDP analysis: ", "s.", inv, "total-chk-time", float)
 
     assert inv["memout"] or inv["timeout"] or ("result" in inv and "total-chk-time" in inv), "Unable to find result or total-chk-time in {}".format(inv["id"]);

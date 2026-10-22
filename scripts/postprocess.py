@@ -646,8 +646,6 @@ def process_benchmark_instance_data(benchmark_instances, execution_json):
     if execution_json["benchmark"]["model"]["type"] == "pomdp":
         bench_data["observations"] = execution_json["input-model"]["observations"]
     bench_data["transitions"] = execution_json["input-model"]["transitions"]
-    if "num-epochs" in execution_json and "result" in execution_json:
-        bench_data["num-epochs"] = execution_json["num-epochs"]
     if "unfolding-pomdp" in execution_json and "states" in execution_json["unfolding-pomdp"]:
         if "--reward-aware" in " ".join(execution_json["commands"]):
             bench_data["raunf-states"] = execution_json["unfolding-pomdp"]["states"]
@@ -662,14 +660,11 @@ def process_benchmark_instance_data(benchmark_instances, execution_json):
         benchmark_instances[bench_id] = bench_data
     else:
         # ensure consistency
-        for key in ["id", "name", "name-with-size", "formalism", "type", "par", "property", "dim", "states", "choices", "observations", "transitions", "num-epochs", "bounds", "unf-states", "raunf-states", "ra-states"]:
+        for key in ["id", "name", "name-with-size", "formalism", "type", "par", "property", "dim", "states", "choices", "observations", "transitions", "bounds", "unf-states", "raunf-states", "ra-states"]:
             if key in bench_data:
                 if key in benchmark_instances[bench_id]:
                     if benchmark_instances[bench_id][key] != bench_data[key]:
-                        if key == "num-epochs":
-                            benchmark_instances[bench_id][key] = max(benchmark_instances[bench_id][key], bench_data[key])
-                        else:
-                            print("WARN: Inconsistency with field {}: '{}' vs '{}'  between any of \n\t{}\nand\t{}".format(key,benchmark_instances[bench_id][key], bench_data[key], benchmark_instances[bench_id]["invocations"], bench_data["invocations"]))
+                        print("WARN: Inconsistency with field {}: '{}' vs '{}'  between any of \n\t{}\nand\t{}".format(key,benchmark_instances[bench_id][key], bench_data[key], benchmark_instances[bench_id]["invocations"], bench_data["invocations"]))
                 else:
                     benchmark_instances[bench_id][key] = bench_data[key]
         # append data
@@ -1129,39 +1124,38 @@ def export_data(exec_data, benchmark_instances, export_kinds, prefix="", *, time
             latex_primary_header = None
             latex_header_rules = ""
             if kind.startswith("latext"):
-                cols = [["table-name"], ["dim"], ["num-epochs"], ["raunf-states"]]
+                cols = [["table-name"], ["dim"], ["raunf-states"]]
                 timelimit = kind[len("latext"):]
                 cfgs = [ [storm.NAME, f"{cfgbase}-best-in-{timelimit}s"] for cfgbase in ["raunfc", "raunfd", "belseqc", "belseqd"] ]
                 cols += [[c[0], c[1], "result-time"] for c in cfgs]
                 latex_primary_header = [
                     r"\multicolumn{1}{c}{\multirow{2}{*}{Model}}",
-                    r"\multicolumn{1}{c}{\multirow{2}{*}{$k$}}",
-                    r"\multicolumn{1}{c|}{\multirow{2}{*}{$|\epochs|$}}",
+                    r"\multicolumn{1}{c|}{\multirow{2}{*}{$k$}}",
                     r"\multicolumn{3}{c|}{\config{ra-unfold}}",
                     r"\multicolumn{2}{c}{\config{ra-bel-seq}}",
                 ]
-                latex_cols = ["", "", "", r"\multicolumn{1}{c}{$|S^\mathsf{ra}_\mathsf{un}|$}"] + [
+                latex_cols = ["", "", r"\multicolumn{1}{c}{$|S^\mathsf{ra}_\mathsf{un}|$}"] + [
                     rf"\multicolumn{{1}}{{{'c|' if index == 1 else 'c'}}}{{\config{{{mode}}}}}"
                     for index, mode in enumerate(["cut", "discr"] * 2)
                 ]
-                latex_header_rules = r"\cmidrule(lr){4-6}\cmidrule(lr){7-8}" + "\n"
+                latex_header_rules = r"\cmidrule(lr){3-5}\cmidrule(lr){6-7}" + "\n"
                 model_column = fixed_latex_column("center", "10mm")
                 size_column = fixed_latex_column("right", "10.1mm")
                 result_column = fixed_latex_column("right", "21.5mm")
-                latex_col_aligns = model_column + fixed_latex_column("right", LATEX_DIMENSION_COLUMN_WIDTH) + size_column + " | " + size_column + result_column * 2 + " | " + result_column * 2
-                cells = create_cells(cols, cfgs, kind, [4,5,6,7])
+                latex_col_aligns = model_column + fixed_latex_column("right", LATEX_DIMENSION_COLUMN_WIDTH) + " | " + size_column + result_column * 2 + " | " + result_column * 2
+                cells = create_cells(cols, cfgs, kind, [3,4,5,6])
             elif kind == "latexbenchmarks":
-                cols = [["table-name"], ["states"], ["observations"], ["dim"], ["bounds"], ["num-epochs"]]
-                latex_cols = [r"Model", r"$|S|$", r"$|Z|$", r"$k$", r"Bounds", r"$|\epochs|$"]
+                cols = [["table-name"], ["states"], ["observations"], ["dim"], ["bounds"]]
+                latex_cols = [r"Model", r"$|S|$", r"$|Z|$", r"$k$", r"Bounds"]
                 latex_cols = [r"\multicolumn{1}{c}{" + lc + "}" for lc in latex_cols]
-                latex_col_aligns = "crrrlr"
+                latex_col_aligns = "crrrl"
                 cfgs = []
                 cells = create_cells(cols, cfgs, kind)
             else:
                 assert kind == "latexunf", "Unhandled latex kind: {}".format(kind)
                 subkind = "unf"
-                cols = [["table-name"], ["dim"], ["num-epochs"], ["unf-states"]]
-                latex_cols = [r"Model", r"$k$", r"$|\epochs|$", r"$|S_\mathsf{un}|$"]
+                cols = [["table-name"], ["dim"], ["unf-states"]]
+                latex_cols = [r"Model", r"$k$", r"$|S_\mathsf{un}|$"]
                 metadata_columns = len(cols)
                 timelimit = storm.META_CONFIG_TIMELIMITS[0]
                 assert len(storm.META_CONFIG_TIMELIMITS) == 1, "Expected only one meta config time limit for latex export, got {}".format(storm.META_CONFIG_TIMELIMITS)
@@ -1187,7 +1181,7 @@ def export_data(exec_data, benchmark_instances, export_kinds, prefix="", *, time
                 latex_header = "\n&".join(latex_primary_header) + "\\\\\n " + latex_header_rules + latex_header
             save_latex(cells, latex_col_aligns, latex_header, latex_output_path("{}table{}.tex".format(prefix, kind[len("latex"):])), result_table=kind != "latexbenchmarks", tabcolsep="0.4pt" if kind.startswith("latext") else "1pt")
         else:
-            cols = [["name"], ["par"], ["states"], ["choices"], ["observations"], ["property"], ["dim"], ["num-epochs"], ["unf-states"], ["raunf-states"]]
+            cols = [["name"], ["par"], ["states"], ["choices"], ["observations"], ["property"], ["dim"], ["unf-states"], ["raunf-states"]]
             cfgs = [ [tool.NAME, c["id"]] for tool in TOOLS  for c in tool.CONFIGS + tool.META_CONFIGS ]
             cols += [[c[0], c[1], "wallclock-time"] for c in cfgs]
             # create and export different kinds of data

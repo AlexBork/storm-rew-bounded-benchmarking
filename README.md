@@ -2,7 +2,7 @@
 
 Postprocessing writes three LaTeX tables to `data/rewbnd-latex`:
 
-- `tablebenchmarks.tex`: benchmark sizes, reward bounds, and epoch counts.
+- `tablebenchmarks.tex`: benchmark sizes and reward bounds.
 - `tableunf.tex`: unfold results with cutoff and discretization statistics.
 - `tablet1800.tex`: ra-unfold versus ra-bel-seq, using the best configurations
   within 1800 seconds. All four lines of each selected result cell are
@@ -20,7 +20,7 @@ both occurred. Failure cells also span four lines. Cells without run data
 are blank, matching the POMDP benchmarking repository.
 
 The tables use `array`, `booktabs`, `multirow`, and `xcolor` with its `table`
-option, along with the document macros `\model`, `\config`, `\epochs`,
+option, along with the document macros `\model`, `\config`,
 `\tupleaccess`, `\vecrew`, `\sizethreshold`, and `\resolution`.
 Main-set table labels use `-b1`, `-b2`, and so on only when the same model label
 would otherwise occur more than once, for example `serv-b1`, `water-b2`, and
@@ -73,7 +73,7 @@ To include an individual plot (or use a collection filename to include them all)
 Regenerate the exports from the existing experiment logs with:
 
 ```sh
-python3 scripts/postprocess.py logs_diss_rew logs_diss_rew_fo logs_diss_rew_lvls logs_diss_rew_bnds
+python3 scripts/postprocess.py logs_diss_rew logs_diss_rew_lvls logs_diss_rew_bnds
 ```
 
 `test-results.tex` is a minimal preview of all three tables and all three plot
